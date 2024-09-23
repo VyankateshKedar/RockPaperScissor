@@ -15,10 +15,12 @@ const winScreen = document.querySelector('.win-screen');
 const winPlayAgainBtn = document.getElementById('play-again-btn');
 const winRulesBtn = document.getElementById('win-rules-btn');
 
+// Fetch scores from localStorage or initialize to 0
 let scores = JSON.parse(localStorage.getItem('scores')) || { player: 0, computer: 0 };
 playerScore.textContent = scores.player;
 computerScore.textContent = scores.computer;
 
+// Handle each button choice
 choiceBtns.forEach(button => {
     button.addEventListener('click', () => playRound(button.dataset.choice));
 });
@@ -31,20 +33,21 @@ function playRound(playerChoice) {
     
     if (winner === 'player') {
         scores.player++;
-        resultMessage.textContent = "YOU WIN AGAINST PC";
+        resultMessage.textContent = "YOU WIN THIS ROUND";
         document.getElementById('player-choice').classList.add('winner-highlight');
     } else if (winner === 'computer') {
         scores.computer++;
-        resultMessage.textContent = "YOU LOSE AGAINST PC";
+        resultMessage.textContent = "PC WINS THIS ROUND";
         document.getElementById('computer-choice').classList.add('winner-highlight');
     } else {
         resultMessage.textContent = "IT'S A TIE";
     }
-    
+
     updateScores();
     showResult();
 }
 
+// Determine the winner of each round
 function getWinner(player, computer) {
     if (player === computer) return 'tie';
     if ((player === 'rock' && computer === 'scissors') ||
@@ -55,15 +58,61 @@ function getWinner(player, computer) {
     return 'computer';
 }
 
+// Show the final winner screen when the "Next" button is clicked
+nextBtn.addEventListener('click', showWinScreen);
+
+function showWinScreen() {
+    document.querySelector('.game-container').style.display = 'none';
+
+    const winMessage = document.querySelector('.win-message');
+    const winSubmessage = document.querySelector('.win-submessage');
+
+    // Compare the current scores to determine the winner
+    if (scores.player > scores.computer) {
+        winMessage.textContent = 'HURRAY!!';
+        winSubmessage.textContent = 'YOU WON THE GAME';
+    } else if (scores.computer > scores.player) {
+        winMessage.textContent = 'OH NO!';
+        winSubmessage.textContent = 'PC WON THE GAME';
+    } else {
+        winMessage.textContent = 'IT\'S A TIE!';
+        winSubmessage.textContent = 'NO ONE WINS';
+    }
+
+    winScreen.style.display = 'block';
+}
+
+// Add one point to the winner's score and reset the game when "Play Again" is clicked
+winPlayAgainBtn.addEventListener('click', () => {
+    // Increment the score of the winner
+    if (scores.player > scores.computer) {
+        scores.player++; // Increment player score
+    } else if (scores.computer > scores.player) {
+        scores.computer++; // Increment computer score
+    }
+
+    // Save the updated scores to localStorage
+    localStorage.setItem('scores', JSON.stringify(scores));
+
+    // Update the scores on the screen
+    updateScores();
+
+    // Reset the game state
+    winScreen.style.display = 'none';
+    document.querySelector('.game-container').style.display = 'block';
+
+    // Reset the UI for the next round
+    playAgainBtn.click(); 
+});
+
+// Function to update score display
 function updateScores() {
     playerScore.textContent = scores.player;
     computerScore.textContent = scores.computer;
-    localStorage.setItem('scores', JSON.stringify(scores));
-    if (scores.player >= 5 || scores.computer >= 5) {
-        showWinScreen();
-    }
+    localStorage.setItem('scores', JSON.stringify(scores)); // Persist the scores
 }
 
+// Display the selected choices
 function displayChoices(playerChoice, computerChoice) {
     const playerChoiceEl = document.getElementById('player-choice');
     const computerChoiceEl = document.getElementById('computer-choice');
@@ -84,43 +133,12 @@ function getChoiceEmoji(choice) {
     return '✌️';
 }
 
-function showWinScreen() {
-    document.querySelector('.game-container').style.display = 'none';
-    const winMessage = document.querySelector('.win-message');
-    const winSubmessage = document.querySelector('.win-submessage');
-
-    if (scores.player > scores.computer) {
-        winMessage.textContent = 'HURRAY!!';
-        winSubmessage.textContent = 'YOU WON THE GAME';
-    } else if (scores.computer > scores.player) {
-        winMessage.textContent = 'OH NO!';
-        winSubmessage.textContent = 'YOU LOST THE GAME';
-    } else {
-        winMessage.textContent = 'IT\'S A TIE!';
-        winSubmessage.textContent = 'NO ONE WINS';
-    }
-
-    winScreen.style.display = 'block';
-}
-
-winPlayAgainBtn.addEventListener('click', () => {
-    winScreen.style.display = 'none';
-    document.querySelector('.game-container').style.display = 'block';
-    scores = { player: 0, computer: 0 };
-    updateScores();
-    localStorage.setItem('scores', JSON.stringify(scores));
-    playAgainBtn.click(); 
-});
-
-winRulesBtn.addEventListener('click', () => {
-    rulesModal.style.display = "block";
-});
-
 function showResult() {
     document.querySelector('.choices').style.display = 'none';
     resultContainer.style.display = 'block';
 }
 
+// Resetting for a new round
 playAgainBtn.addEventListener('click', () => {
     resultContainer.style.display = 'none';
     document.querySelector('.choices').style.display = 'block';
@@ -128,10 +146,11 @@ playAgainBtn.addEventListener('click', () => {
     document.getElementById('computer-choice').classList.remove('winner-highlight');
 });
 
+// Rules modal handling
 rulesBtn.onclick = () => rulesModal.style.display = "block";
 closeBtn.onclick = () => rulesModal.style.display = "none";
 window.onclick = (event) => {
     if (event.target == rulesModal) {
         rulesModal.style.display = "none";
     }
-}
+};
